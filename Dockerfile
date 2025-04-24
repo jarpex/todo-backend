@@ -6,9 +6,16 @@ RUN apk update && \
     gcc \
     libpq-dev \
     postgresql-dev \
-    musl-dev
+    musl-dev \
+    build-base \
+    python3-dev \
+    libffi-dev \
+    openssl-dev
 
 WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 RUN chmod +x start.sh
