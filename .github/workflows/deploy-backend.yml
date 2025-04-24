@@ -15,13 +15,15 @@ jobs:
 
       - name: Login to Vault
         shell: bash
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
         run: |
           export VAULT_ADDR=http://192.168.1.160:21626
-          if [ -z "${{ secrets.VAULT_TOKEN }}" ]; then
+          if [ -z "$VAULT_TOKEN" ]; then
             echo "🚨 Missing VAULT_TOKEN secret!" >&2
             exit 1
           fi
-          vault login "${{ secrets.VAULT_TOKEN }}"
+          vault login "$VAULT_TOKEN"
           vault kv get -mount="todo-backend" -format=json postgres > backend_secrets.json
           vault kv get -mount="todo-backend" -format=json app >> backend_secrets.json
 
