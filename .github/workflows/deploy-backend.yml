@@ -1,0 +1,52 @@
+name: Deploy ToDo backend on K3s
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Login to Vault
+        run: |
+          export VAULT_ADDR=http://192.168.1.160:21626
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv get -mount="todo-backend" -format=json postgres > backend_secrets.json
+          vault kv get -mount="todo-backend" -format=json app >> backend_secrets.json
+
+      - name: Prepare Kaniko build context
+        run: |
+          mkdir -p /home/admin/build/todo-backend
+          cp -r * /home/admin/build/todo-backend/
+          cp backend_secrets.json /home/admin/build/todo-backend/
+
+      - name: Create Kaniko build job
+        run: |
+          sudo k3s kubectl apply -f k8s/kaniko-backend-job.yaml
+
+      - name: Wait for Kaniko build to finish
+        run: |
+          while [[ $(sudo k3s kubectl get job kaniko-build-backend -o jsonpath='{.status.succeeded}') != "1" ]]; do
+            echo "Waiting for kaniko-backend build to finish..."
+            sleep 5
+          done
+
+      - name: Clean up Kaniko job
+        run: |
+          sudo k3s kubectl delete job kaniko-build-backend --ignore-not-found
+
+      - name: Deploy backend
+        run: |
+          sudo k3s kubectl apply -f k8s/backend-deployment.yaml
+          sudo k3s kubectl apply -f k8s/backend-service.yaml

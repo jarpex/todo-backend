@@ -1,0 +1,10 @@
+**/.DS_Store
+**/__pycache__/
+
+# Local env files
+.env
+.env.*
+
+# IDE configs
+.vscode/
+.idea/
