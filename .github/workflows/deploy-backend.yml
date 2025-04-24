@@ -17,7 +17,13 @@ jobs:
         shell: bash
         env:
           VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          VAULT_ADDR: http://192.168.1.160:21626
         run: |
+          if [ -z "$VAULT_TOKEN" ]; then
+            echo "❌ VAULT_TOKEN is missing"
+            exit 1
+          fi
+
           DB_USER=$(vault kv get -mount="todo-backend" -field=username postgres)
           DB_PASS=$(vault kv get -mount="todo-backend" -field=password postgres)
           DB_HOST=$(vault kv get -mount="todo-backend" -field=host postgres)
