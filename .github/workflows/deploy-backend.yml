@@ -13,16 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check token presence
+      - name: Login to Vault
+        shell: bash
         run: |
+          export VAULT_ADDR=http://192.168.1.160:21626
           if [ -z "${{ secrets.VAULT_TOKEN }}" ]; then
             echo "🚨 Missing VAULT_TOKEN secret!" >&2
             exit 1
           fi
-
-      - name: Login to Vault
-        run: |
-          export VAULT_ADDR=http://192.168.1.160:21626
           vault login "${{ secrets.VAULT_TOKEN }}"
           vault kv get -mount="todo-backend" -format=json postgres > backend_secrets.json
           vault kv get -mount="todo-backend" -format=json app >> backend_secrets.json
