@@ -47,7 +47,6 @@ jobs:
         run: |
           mkdir -p /home/admin/build/todo-backend
           cp -r * /home/admin/build/todo-backend/
-          cp backend_secrets.json /home/admin/build/todo-backend/
 
       - name: Create Kaniko build job
         run: |
