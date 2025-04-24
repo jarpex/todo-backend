@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.13-bookworm
 
 RUN apt update && apt install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
