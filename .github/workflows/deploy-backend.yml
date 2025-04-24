@@ -18,14 +18,24 @@ jobs:
         env:
           VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
         run: |
-          export VAULT_ADDR=http://192.168.1.160:21626
-          if [ -z "$VAULT_TOKEN" ]; then
-            echo "🚨 Missing VAULT_TOKEN secret!" >&2
-            exit 1
-          fi
-          vault login "$VAULT_TOKEN"
-          vault kv get -mount="todo-backend" -format=json postgres > backend_secrets.json
-          vault kv get -mount="todo-backend" -format=json app >> backend_secrets.json
+          DB_USER=$(vault kv get -mount="todo-backend" -field=username postgres)
+          DB_PASS=$(vault kv get -mount="todo-backend" -field=password postgres)
+          DB_HOST=$(vault kv get -mount="todo-backend" -field=host postgres)
+          DB_PORT=$(vault kv get -mount="todo-backend" -field=port postgres)
+          DB_NAME=$(vault kv get -mount="todo-backend" -field=dbname postgres)
+
+          JWT_SECRET=$(vault kv get -mount="todo-backend" -field=JWT_SECRET_KEY app)
+
+          export DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+
+          kubectl create secret generic backend-secrets \
+            --from-literal=DATABASE_URL="$DATABASE_URL" \
+            --from-literal=JWT_SECRET_KEY="$JWT_SECRET" \
+            --dry-run=client -o yaml > k8s/backend-secrets.yaml
+
+      - name: Apply backend secrets
+        run: |
+          sudo k3s kubectl apply -f k8s/backend-secrets.yaml
 
       - name: Prepare Kaniko build context
         run: |
