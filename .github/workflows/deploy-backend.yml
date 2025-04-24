@@ -46,7 +46,7 @@ jobs:
       - name: Prepare Kaniko build context
         run: |
           mkdir -p /home/admin/build/todo-backend
-          cp -r . /home/admin/build/todo-backend/
+          rsync -av --exclude='.git' . /home/admin/build/todo-backend/
 
       - name: Debug check Kaniko build context
         run: ls -la /home/admin/build/todo-backend
