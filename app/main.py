@@ -6,18 +6,15 @@ from app.api.v1 import auth, todo
 app = FastAPI(title="ToDo App")
 
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://192.168.1.160:30081",
-    "https://todo.jarpex.com",
+    "https://todo.jarpex.com",   
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
