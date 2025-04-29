@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   deploy:
     runs-on: self-hosted
