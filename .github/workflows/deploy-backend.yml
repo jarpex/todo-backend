@@ -50,8 +50,8 @@ jobs:
 
       - name: SAST – Run Semgrep scan in-cluster
         run: |
-          sudo k3s kubectl delete job semgrep-scan --ignore-not-found
-          sudo k3s kubectl apply -f /home/admin/k8s/semgrep-job.yaml
+          sudo k3s kubectl delete job semgrep-backend-scan --ignore-not-found
+          sudo k3s kubectl apply -f /home/admin/k8s/semgrep-backend-job.yaml
 
           echo "⏳ Waiting for Semgrep job to complete..."
           while [[ $(sudo k3s kubectl get job semgrep-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
