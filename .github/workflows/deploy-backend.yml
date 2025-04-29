@@ -54,10 +54,10 @@ jobs:
           sudo k3s kubectl apply -f /home/admin/k8s/semgrep-backend-job.yaml
 
           echo "⏳ Waiting for Semgrep job to complete..."
-          while [[ $(sudo k3s kubectl get job semgrep-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
-            if [[ $(sudo k3s kubectl get job semgrep-scan -o jsonpath='{.status.failed}') == "1" ]]; then
+          while [[ $(sudo k3s kubectl get job semgrep-backend-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
+            if [[ $(sudo k3s kubectl get job semgrep-backend-scan -o jsonpath='{.status.failed}') == "1" ]]; then
               echo "❌ Semgrep scan failed in cluster. Deployment halted."
-              sudo k3s kubectl logs job/semgrep-scan
+              sudo k3s kubectl logs job/semgrep-backend-scan
               exit 1
             fi
             sleep 5
