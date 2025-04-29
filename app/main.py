@@ -8,8 +8,8 @@ app = FastAPI(title="ToDo App")
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://192.168.1.160:30082",
-    "http://api.todo.jarpex.ru",
+    "http://192.168.1.160:30081",
+    "https://todo.jarpex.com",
 ]
 
 app.add_middleware(
