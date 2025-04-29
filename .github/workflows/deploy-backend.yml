@@ -13,6 +13,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: SAST – Run Semgrep Scan via Docker
+        run: |
+          docker run --rm \
+            -v "${PWD}:/src" \
+            returntocorp/semgrep \
+            semgrep ci --config=auto --exclude-dir node_modules --exclude-dir .git || {
+              echo "❌ Semgrep scan failed. Deployment halted."
+              exit 1
+            }
+
       - name: Login to Vault
         shell: bash
         env:
