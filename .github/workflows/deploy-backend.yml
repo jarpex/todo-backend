@@ -70,3 +70,4 @@ jobs:
         run: |
           sudo k3s kubectl apply -f k8s/backend-deployment.yaml
           sudo k3s kubectl apply -f k8s/backend-service.yaml
+          sudo k3s kubectl rollout restart deployment todo-backend

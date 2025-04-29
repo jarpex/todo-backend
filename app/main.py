@@ -6,12 +6,16 @@ from app.api.v1 import auth, todo
 app = FastAPI(title="ToDo App")
 
 origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://192.168.1.160:30081",
+    "http://todo.jarpex.com",  
     "https://todo.jarpex.com",   
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Authorization","Origin", "Accept"],
