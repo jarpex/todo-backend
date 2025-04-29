@@ -13,16 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: SAST – Run Semgrep Scan via Docker
-        run: |
-          docker run --rm \
-            -v "${PWD}:/src" \
-            returntocorp/semgrep \
-            semgrep ci --config=auto --exclude-dir node_modules --exclude-dir .git || {
-              echo "❌ Semgrep scan failed. Deployment halted."
-              exit 1
-            }
-
       - name: Login to Vault
         shell: bash
         env:
@@ -57,6 +47,23 @@ jobs:
         run: |
           mkdir -p /home/admin/build/todo-backend
           rsync -av --exclude='.git' . /home/admin/build/todo-backend/
+
+      - name: SAST – Run Semgrep scan in-cluster
+        run: |
+          sudo k3s kubectl delete job semgrep-scan --ignore-not-found
+          sudo k3s kubectl apply -f /home/admin/k8s/semgrep-job.yaml
+
+          echo "⏳ Waiting for Semgrep job to complete..."
+          while [[ $(sudo k3s kubectl get job semgrep-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
+            if [[ $(sudo k3s kubectl get job semgrep-scan -o jsonpath='{.status.failed}') == "1" ]]; then
+              echo "❌ Semgrep scan failed in cluster. Deployment halted."
+              sudo k3s kubectl logs job/semgrep-scan
+              exit 1
+            fi
+            sleep 5
+          done
+
+          echo "✅ Semgrep scan passed."
 
       - name: Debug check Kaniko build context
         run: ls -la /home/admin/build/todo-backend
