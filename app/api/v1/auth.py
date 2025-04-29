@@ -18,6 +18,8 @@ def get_db():
 
 @router.post("/register", response_model=UserOut)
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    if user.password == '':
+        raise HTTPException(status_code=400, detail="Password cannot be empty")
     db_user = get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
