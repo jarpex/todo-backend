@@ -69,12 +69,6 @@ jobs:
 
           echo "✅ Semgrep scan passed."
 
-      - name: Save Semgrep report to artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-results
-          path: /home/admin/build/todo-backend/semgrep-results.sarif
-
       - name: Upload Semgrep SARIF to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
