@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings, Field
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
 # Load environment variables from a .env file (if present)
 load_dotenv()
