@@ -94,3 +94,31 @@ jobs:
           sudo k3s kubectl apply -f k8s/backend-deployment.yaml
           sudo k3s kubectl apply -f k8s/backend-service.yaml
           sudo k3s kubectl rollout restart deployment todo-backend
+  DAST:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run ZAP DAST scan in cluster
+        run: |
+          sudo k3s kubectl delete job zap-dast-scan --ignore-not-found
+          sudo k3s kubectl apply -f /home/admin/k8s/zap-dast-job.yaml
+
+          echo "⏳ Waiting for ZAP DAST scan to complete..."
+          while [[ $(sudo k3s kubectl get job zap-dast-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
+            if [[ $(sudo k3s kubectl get job zap-dast-scan -o jsonpath='{.status.failed}') == "1" ]]; then
+              echo "❌ ZAP DAST scan failed."
+              sudo k3s kubectl logs job/zap-dast-scan
+              exit 1
+            fi
+            sleep 5
+          done
+
+          echo "✅ ZAP DAST scan passed."
+
+      - name: Upload ZAP SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: /home/admin/build/zap-output/zap-results.sarif
