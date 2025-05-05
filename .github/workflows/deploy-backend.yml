@@ -118,7 +118,15 @@ jobs:
 
           echo "✅ ZAP DAST scan passed."
 
+      - name: Fix SARIF for GitHub Code Scanning
+        run: |
+          jq '
+            .runs[].results[].locations[].physicalLocation.artifactLocation.uri |= 
+            sub("^http://[^/]+/"; "todo-backend/") 
+          ' /home/admin/build/zap-output/zap-results.sarif.json > /home/admin/build/zap-output/zap-fixed.sarif.json
+
       - name: Upload ZAP SARIF to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: /home/admin/build/zap-output/zap-results.sarif.json
+          sarif_file: /home/admin/build/zap-output/zap-fixed.sarif.json
+          checkout_path: /home/admin/thesis-backend-runner/_work/todo-backend/todo-backend
