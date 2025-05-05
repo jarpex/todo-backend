@@ -48,3 +48,7 @@ def login(
 
     access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/health", status_code=status.HTTP_200_OK)
+def health_check() -> dict:
+    return {"status": "ok"}

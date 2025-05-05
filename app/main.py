@@ -22,6 +22,8 @@ origins = [
     "http://192.168.1.160:30081",
     "http://todo.jarpex.com",
     "https://todo.jarpex.com",
+    "http://api-todo.jarpex.com",
+    "https://api-todo.jarpex.com",
 ]
 
 app.add_middleware(
