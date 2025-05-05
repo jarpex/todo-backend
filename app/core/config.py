@@ -1,13 +1,18 @@
-import os
+from pydantic import BaseSettings, Field
 from dotenv import load_dotenv
 
+# Load environment variables from a .env file (if present)
 load_dotenv()
 
-class Settings:
+class Settings(BaseSettings):
     PROJECT_NAME: str = "todo-app"
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-secret")
+    JWT_SECRET_KEY: str = Field("dev-secret", env="JWT_SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
+    DATABASE_URL: str = Field(..., env="DATABASE_URL")
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
 settings = Settings()

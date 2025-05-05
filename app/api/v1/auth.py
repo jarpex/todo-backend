@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -10,12 +11,18 @@ from app.api.deps import get_db
 
 router = APIRouter()
 
+PASSWORD_REGEX = re.compile(
+    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).{8,}$"
+)
+
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)) -> UserOut:
-    if not user.password:
+    if not PASSWORD_REGEX.match(user.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password cannot be empty",
+            detail="Password must be at least 8 characters long, "
+                   "contain at least one uppercase letter, one lowercase letter, "
+                   "and one number or special character.",
         )
 
     existing_user = get_user_by_email(db, email=user.email)

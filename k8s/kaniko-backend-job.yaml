@@ -18,6 +18,8 @@ spec:
           volumeMounts:
             - name: build-context
               mountPath: /workspace
+          securityContext:
+            runAsUser: 0
       volumes:
         - name: build-context
           hostPath:

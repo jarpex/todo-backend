@@ -1,17 +1,20 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
-# Basic schema for user
+
 class UserBase(BaseModel):
-    email: EmailStr
+    """Base schema for user data."""
+    email: EmailStr = Field(..., example="user@example.com")
 
-# On registration (with password)
+
 class UserCreate(UserBase):
-    password: str
+    """Schema used during user registration."""
+    password: str = Field(..., min_length=8, example="strongPassword123")
 
-# Response without password
+
 class UserOut(UserBase):
-    id: int
-    is_active: bool
+    """Schema returned in responses (e.g., after registration or login)."""
+    id: int = Field(..., example=1)
+    is_active: bool = Field(default=True, example=True)
 
     class Config:
         orm_mode = True

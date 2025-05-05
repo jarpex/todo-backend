@@ -1,24 +1,28 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
-# Basic schema for todo item
-class TodoBase(BaseModel):
-    title: str
-    description: Optional[str] = None
-    done: bool = False
 
-# Task creation
+class TodoBase(BaseModel):
+    """Shared fields for a to-do item."""
+    title: str = Field(..., example="Buy groceries")
+    description: Optional[str] = Field(None, example="Milk, Eggs, Bread")
+    done: bool = Field(False, example=False)
+
+
 class TodoCreate(TodoBase):
+    """Fields required to create a new to-do item."""
     pass
 
-# Task update
-class TodoUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    done: Optional[bool] = None
 
-# Response
+class TodoUpdate(BaseModel):
+    """Fields that can be updated in a to-do item."""
+    title: Optional[str] = Field(None, example="Buy groceries")
+    description: Optional[str] = Field(None, example="Milk, Eggs, Bread")
+    done: Optional[bool] = Field(None, example=True)
+
+
 class TodoOut(TodoBase):
+    """Response model for returning a to-do item."""
     id: int
     owner_id: int
 

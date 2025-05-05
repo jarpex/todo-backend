@@ -10,4 +10,4 @@ spec:
       port: 8000
       targetPort: 8000
       nodePort: 30082
-  type: NodePort # or ClusterIP if you're using Ingress
+  type: NodePort
