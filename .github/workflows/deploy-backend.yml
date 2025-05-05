@@ -10,8 +10,10 @@ permissions:
   security-events: write
 
 jobs:
-  deploy:
+  Vault-secrets:
     runs-on: self-hosted
+    env:
+      KUBECTL: sudo k3s kubectl
 
     steps:
       - name: Checkout repository
@@ -38,30 +40,35 @@ jobs:
 
           export DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
-          kubectl create secret generic backend-secrets \
+          ${{ env.KUBECTL }} create secret generic backend-secrets \
             --from-literal=DATABASE_URL="$DATABASE_URL" \
             --from-literal=JWT_SECRET_KEY="$JWT_SECRET" \
             --dry-run=client -o yaml > k8s/backend-secrets.yaml
 
       - name: Apply backend secrets
         run: |
-          sudo k3s kubectl apply -f k8s/backend-secrets.yaml
+          ${{ env.KUBECTL }} apply -f k8s/backend-secrets.yaml
 
-      - name: Prepare Kaniko build context
-        run: |
-          mkdir -p /home/admin/build/todo-backend
-          rsync -av --exclude='.git' . /home/admin/build/todo-backend/
+  SAST:
+    runs-on: self-hosted
+    needs: Vault-secrets
+    env:
+      KUBECTL: sudo k3s kubectl
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: SAST – Run Semgrep scan in-cluster
         run: |
-          sudo k3s kubectl delete job semgrep-backend-scan --ignore-not-found
-          sudo k3s kubectl apply -f /home/admin/k8s/semgrep-backend-job.yaml
+          ${{ env.KUBECTL }} delete job semgrep-backend-scan --ignore-not-found
+          ${{ env.KUBECTL }} apply -f /home/admin/k8s/semgrep-backend-job.yaml
 
           echo "⏳ Waiting for Semgrep job to complete..."
-          while [[ $(sudo k3s kubectl get job semgrep-backend-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
-            if [[ $(sudo k3s kubectl get job semgrep-backend-scan -o jsonpath='{.status.failed}') == "1" ]]; then
+          while [[ $(${{ env.KUBECTL }} get job semgrep-backend-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
+            if [[ $(${{ env.KUBECTL }} get job semgrep-backend-scan -o jsonpath='{.status.failed}') == "1" ]]; then
               echo "❌ Semgrep scan failed in cluster. Deployment halted."
-              sudo k3s kubectl logs job/semgrep-backend-scan
+              ${{ env.KUBECTL }} logs job/semgrep-backend-scan
               exit 1
             fi
             sleep 5
@@ -74,28 +81,46 @@ jobs:
         with:
           sarif_file: /home/admin/build/todo-backend/semgrep-results.sarif
 
+  Kaniko-deploy:
+    runs-on: self-hosted
+    needs: [Vault-secrets, SAST]
+    env:
+      KUBECTL: sudo k3s kubectl
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Kaniko build context
+        run: |
+          mkdir -p /home/admin/build/todo-backend
+          rsync -av --exclude='.git' . /home/admin/build/todo-backend/
+
       - name: Create Kaniko build job
         run: |
-          sudo k3s kubectl apply -f k8s/kaniko-backend-job.yaml
+          ${{ env.KUBECTL }} apply -f k8s/kaniko-backend-job.yaml
 
       - name: Wait for Kaniko build to finish
         run: |
-          while [[ $(sudo k3s kubectl get job kaniko-build-backend -o jsonpath='{.status.succeeded}') != "1" ]]; do
+          while [[ $(${{ env.KUBECTL }} get job kaniko-build-backend -o jsonpath='{.status.succeeded}') != "1" ]]; do
             echo "Waiting for kaniko-backend build to finish..."
             sleep 5
           done
 
       - name: Clean up Kaniko job
         run: |
-          sudo k3s kubectl delete job kaniko-build-backend --ignore-not-found
+          ${{ env.KUBECTL }} delete job kaniko-build-backend --ignore-not-found
 
       - name: Deploy backend
         run: |
-          sudo k3s kubectl apply -f k8s/backend-deployment.yaml
-          sudo k3s kubectl apply -f k8s/backend-service.yaml
-          sudo k3s kubectl rollout restart deployment todo-backend
+          ${{ env.KUBECTL }} apply -f k8s/backend-deployment.yaml
+          ${{ env.KUBECTL }} apply -f k8s/backend-service.yaml
+          ${{ env.KUBECTL }} rollout restart deployment todo-backend
+
   DAST:
     runs-on: self-hosted
+    env:
+      KUBECTL: sudo k3s kubectl
 
     steps:
       - name: Checkout repository
@@ -103,14 +128,14 @@ jobs:
 
       - name: Run ZAP DAST scan in cluster
         run: |
-          sudo k3s kubectl delete job zap-dast-scan --ignore-not-found
-          sudo k3s kubectl apply -f /home/admin/k8s/zap-dast-job.yaml
+          ${{ env.KUBECTL }} delete job zap-dast-scan --ignore-not-found
+          ${{ env.KUBECTL }} apply -f /home/admin/k8s/zap-dast-job.yaml
 
           echo "⏳ Waiting for ZAP DAST scan to complete..."
-          while [[ $(sudo k3s kubectl get job zap-dast-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
-            if [[ $(sudo k3s kubectl get job zap-dast-scan -o jsonpath='{.status.failed}') == "1" ]]; then
+          while [[ $(${{ env.KUBECTL }} get job zap-dast-scan -o jsonpath='{.status.succeeded}') != "1" ]]; do
+            if [[ $(${{ env.KUBECTL }} get job zap-dast-scan -o jsonpath='{.status.failed}') == "1" ]]; then
               echo "❌ ZAP DAST scan failed."
-              sudo k3s kubectl logs job/zap-dast-scan
+              ${{ env.KUBECTL }} logs job/zap-dast-scan
               exit 1
             fi
             sleep 5
