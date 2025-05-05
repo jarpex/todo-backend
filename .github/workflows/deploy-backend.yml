@@ -119,6 +119,7 @@ jobs:
 
   DAST:
     runs-on: self-hosted
+    needs: [Vault-secrets, SAST, Kaniko-deploy]
     env:
       KUBECTL: sudo k3s kubectl
 
