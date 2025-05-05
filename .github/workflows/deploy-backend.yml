@@ -120,7 +120,7 @@ jobs:
 
       - name: Fix SARIF for GitHub Code Scanning
         run: |
-          jq '
+          sudo jq '
             .runs[].results[].locations[].physicalLocation.artifactLocation.uri |= 
             sub("^http://[^/]+/"; "todo-backend/") 
           ' /home/admin/build/zap-output/zap-results.sarif.json > /home/admin/build/zap-output/zap-fixed.sarif.json
